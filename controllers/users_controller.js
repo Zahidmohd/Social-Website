@@ -1,3 +1,4 @@
+
 const User = require('../models/user');
 
 // Render the user profile page
