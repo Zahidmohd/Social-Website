@@ -1,51 +1,40 @@
 const User = require('../models/user');
 
-
-// Render the profile page
-module.exports.profile = async function(req, res) {
-    if (req.cookies.user_id) {
-        try {
-            const user = await User.findById(req.cookies.user_id);
-            if (user) {
-                return res.render('user_profile', {
-                    title: "User Profile",
-                    user: user
-                });
-            } else {
-                return res.redirect('/users/sign-in');
-            }
-        } catch (err) {
-            console.error('Error in finding user:', err);
-            return res.redirect('/users/sign-in');
-        }
-    } else {
-        return res.redirect('/users/sign-in');
-    }
+// Render the user profile page
+module.exports.profile = function(req, res) {
+    return res.render('user_profile', {
+        title: 'User Profile'
+    });
 };
 
+// Render the sign-up page
+module.exports.signUp = function(req, res) {
+    if (req.isAuthenticated()) {
+        return res.redirect('/users/profile');
+    }
 
-// render the sign up page
-module.exports.signUp = function(req, res){
     return res.render('user_sign_up', {
         title: "Codeial | Sign Up"
-    })
-}
+    });
+};
 
-
-// render the sign in page
-module.exports.signIn = function(req, res){
+// Render the sign-in page
+module.exports.signIn = function(req, res) {
+    if (req.isAuthenticated()) {
+        return res.redirect('/users/profile');
+    }
     return res.render('user_sign_in', {
         title: "Codeial | Sign In"
-    })
-}
+    });
+};
 
-// Get the sign up data
+// Handle user sign-up
 module.exports.create = async function(req, res) {
-    try {
-        if (req.body.password !== req.body.confirm_password) {
-            return res.redirect('back');
-        }
+    if (req.body.password !== req.body.confirm_password) {
+        return res.redirect('back');
+    }
 
+    try {
         const user = await User.findOne({ email: req.body.email });
 
         if (!user) {
@@ -55,40 +44,23 @@ module.exports.create = async function(req, res) {
             return res.redirect('back');
         }
     } catch (err) {
-        console.error('Error in creating user while signing up:', err);
+        console.log('Error in user creation:', err);
         return res.redirect('back');
     }
 };
 
-
-// sign in and create a session for the user
-module.exports.createSession = function(req, res){
-
+// Handle user sign-in and create a session
+module.exports.createSession = function(req, res) {
     return res.redirect('/');
+};
 
-    // // steps to authenticate
-    // // find the user
-    // User.findOne({email: req.body.email}, function(err, user){
-    //     if(err){console.log('error in finding user in signing in'); return}
-    //     // handle user found
-    //     if (user){
-
-    //         // handle password which doesn't match
-    //         if (user.password != req.body.password){
-    //             return res.redirect('back');
-    //         }
-
-    //         // handle session creation
-    //         res.cookie('user_id', user.id);
-    //         return res.redirect('/users/profile');
-
-    //     }else{
-    //         // handle user not found
-
-    //         return res.redirect('back');
-    //     }
-
-
-    // });
-    
-}
+// Handle user logout and destroy session
+module.exports.destroySession = function(req, res) {
+    req.logout(function(err) {
+        if (err) {
+            console.log('Error during logout:', err);
+            return res.redirect('/');
+        }
+        return res.redirect('/');
+    });
+};
