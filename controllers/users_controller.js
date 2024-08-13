@@ -14,6 +14,23 @@ module.exports.profile = async function(req, res) {
     }
 };
 
+module.exports.update = async function(req, res) {
+    // Check if the logged-in user's ID matches the ID in the request params
+    if (req.user.id == req.params.id) {
+        try {
+            // Find the user by ID and update with the request body data
+            await User.findByIdAndUpdate(req.params.id, req.body);
+            return res.redirect('back');
+        } catch (err) {
+            console.log('Error in updating user:', err);
+            return res.status(500).send('Internal Server Error');
+        }
+    } else {
+        // If the user is not authorized, return a 401 Unauthorized response
+        return res.status(401).send('Unauthorized');
+    }
+};
+
 // Render the sign-up page
 module.exports.signUp = function(req, res) {
     if (req.isAuthenticated()) {
