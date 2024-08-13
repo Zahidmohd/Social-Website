@@ -1,11 +1,17 @@
-
 const User = require('../models/user');
 
 // Render the user profile page
-module.exports.profile = function(req, res) {
-    return res.render('user_profile', {
-        title: 'User Profile'
-    });
+module.exports.profile = async function(req, res) {
+    try {
+        let user = await User.findById(req.params.id);
+        return res.render('user_profile', {
+            title: 'User Profile',
+            profile_user: user // Passing the user data to the template
+        });
+    } catch (err) {
+        console.log('Error in finding user:', err);
+        return res.status(500).send('Internal Server Error');
+    }
 };
 
 // Render the sign-up page
@@ -36,7 +42,7 @@ module.exports.create = async function(req, res) {
     }
 
     try {
-        const user = await User.findOne({ email: req.body.email });
+        let user = await User.findOne({ email: req.body.email });
 
         if (!user) {
             await User.create(req.body);
