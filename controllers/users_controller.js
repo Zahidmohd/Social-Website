@@ -20,6 +20,7 @@ module.exports.update = async function(req, res) {
         try {
             // Find the user by ID and update with the request body data
             await User.findByIdAndUpdate(req.params.id, req.body);
+            req.flash('success', 'Updated!');
             return res.redirect('back');
         } catch (err) {
             console.log('Error in updating user:', err);
@@ -55,16 +56,21 @@ module.exports.signIn = function(req, res) {
 // Handle user sign-up
 module.exports.create = async function(req, res) {
     if (req.body.password !== req.body.confirm_password) {
+        req.flash('error', 'Passwords do not match');
         return res.redirect('back');
     }
 
     try {
         let user = await User.findOne({ email: req.body.email });
-
+        if(err){req.flash('error', err); return}
+        
         if (!user) {
             await User.create(req.body);
+            if(err){req.flash('error', err); return}
+
             return res.redirect('/users/sign-in');
         } else {
+            req.flash('success', 'You have signed up, login to continue!');
             return res.redirect('back');
         }
     } catch (err) {

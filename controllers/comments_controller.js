@@ -20,16 +20,16 @@ module.exports.create = async function(req, res){
 
             // You can also add a flash message here to notify the user of successful comment creation
             // req.flash('success', 'Comment added successfully!');
-
+            req.flash('success', 'Comment published!');
             return res.redirect('/');
         } else {
             // If the post doesn't exist, redirect back with an error message
-            // req.flash('error', 'Post not found!');
+            req.flash('error', 'Post not found!');
             return res.redirect('back');
         }
     } catch (err) {
-        console.log('Error in creating comment:', err);
-        // req.flash('error', 'Error in creating comment');
+    
+        req.flash('error', err);
         return res.redirect('back');
     }
 }
@@ -44,13 +44,15 @@ module.exports.destroy = async function(req, res) {
 
             await Comment.deleteOne({ _id: req.params.id });
             await Post.findByIdAndUpdate(postId, { $pull: { comments: req.params.id } });
-
+            
+            req.flash('success', 'Comment deleted!');
             return res.redirect('back');
         } else {
+            req.flash('error', 'Unauthorized');
             return res.redirect('back');
         }
     } catch (err) {
-        console.log('Error in deleting comment:', err);
+        req.flash('error', err);
         return res.status(500).send('Internal Server Error');
     }
 };
