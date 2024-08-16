@@ -1,5 +1,6 @@
 const Post = require('../models/post');
 const Comment = require('../models/comment');
+const { post } = require('../routes');
 
 module.exports.create = async function(req, res) {
     try {
@@ -7,6 +8,16 @@ module.exports.create = async function(req, res) {
             content: req.body.content,
             user: req.user._id
         });
+
+        if (req.xhr){
+            return res.status(200).json({
+                data: {
+                    post: post
+                },
+                message: "Post created successfully"
+            });
+        }
+
         req.flash('success', 'Post published!');
         return res.redirect('/');
     } catch (err) {
