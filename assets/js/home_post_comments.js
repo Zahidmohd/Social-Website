@@ -4,32 +4,35 @@
 // 1. When the page loads
 // 2. Creation of every post dynamically via AJAX
 
-class PostComments{
-    constructor(postId){
+class PostComments {
+    constructor(postId) {
         this.postId = postId;
         this.postContainer = $(`#post-${postId}`);
         this.newCommentForm = $(`#post-${postId}-comments-form`);
 
-        this.createComment(postId);
+        // Initialize comment creation for the post
+        this.createComment();
 
         // Call deleteComment for all existing comments
         this.postContainer.on('click', '.delete-comment-button', (e) => {
+            e.preventDefault(); // Prevent default link behavior
             this.deleteComment($(e.currentTarget));
         });
     }
 
-    createComment(postId){
+    // Method to handle new comment creation via AJAX
+    createComment() {
         this.newCommentForm.submit((e) => {
             e.preventDefault();
-            let self = this;
+            const self = this;
 
             $.ajax({
                 type: 'post',
                 url: '/comments/create',
-                data: $(self).serialize(),
+                data: self.newCommentForm.serialize(),
                 success: (data) => {
-                    let newComment = this.newCommentDom(data.data.comment);
-                    $(`#post-comments-${postId}`).prepend(newComment);
+                    let newComment = self.newCommentDom(data.data.comment);
+                    $(`#post-comments-${self.postId}`).prepend(newComment);
 
                     new Noty({
                         theme: 'relax',
@@ -38,17 +41,25 @@ class PostComments{
                         layout: 'topRight',
                         timeout: 1500
                     }).show();
-                }, 
+                },
                 error: (error) => {
-                    console.log(error.responseText);
+                    console.error(error.responseText);
+                    new Noty({
+                        theme: 'relax',
+                        text: "Error publishing comment!",
+                        type: 'error',
+                        layout: 'topRight',
+                        timeout: 1500
+                    }).show();
                 }
             });
         });
     }
 
-    newCommentDom(comment){
+    // Method to generate the DOM element for a new comment
+    newCommentDom(comment) {
         return $(`
-            <li id="comment-${ comment._id }">
+            <li id="comment-${comment._id}">
                 <p>
                     <small>
                         <a class="delete-comment-button" href="/comments/destroy/${comment._id}">X</a>
@@ -61,7 +72,8 @@ class PostComments{
         `);
     }
 
-    deleteComment(deleteLink){
+    // Method to handle comment deletion via AJAX
+    deleteComment(deleteLink) {
         $.ajax({
             type: 'get',
             url: deleteLink.prop('href'),
@@ -75,9 +87,16 @@ class PostComments{
                     layout: 'topRight',
                     timeout: 1500
                 }).show();
-            }, 
+            },
             error: (error) => {
-                console.log(error.responseText);
+                console.error(error.responseText);
+                new Noty({
+                    theme: 'relax',
+                    text: "Error deleting comment!",
+                    type: 'error',
+                    layout: 'topRight',
+                    timeout: 1500
+                }).show();
             }
         });
     }

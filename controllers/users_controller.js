@@ -9,7 +9,7 @@ module.exports.profile = async function(req, res) {
             profile_user: user
         });
     } catch (err) {
-        console.error(err);
+        console.error('Error in loading profile:', err);
         req.flash('error', 'Error in loading profile');
         return res.redirect('back');
     }
@@ -17,13 +17,13 @@ module.exports.profile = async function(req, res) {
 
 // Update user profile
 module.exports.update = async function(req, res) {
-    if (req.user.id == req.params.id) {
+    if (req.user.id === req.params.id) {
         try {
-            await User.findByIdAndUpdate(req.params.id, req.body);
-            req.flash('success', 'Updated!');
+            await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
+            req.flash('success', 'Profile updated successfully!');
             return res.redirect('back');
         } catch (err) {
-            console.error(err);
+            console.error('Error in updating profile:', err);
             req.flash('error', 'Error in updating profile');
             return res.redirect('back');
         }
@@ -33,7 +33,7 @@ module.exports.update = async function(req, res) {
     }
 };
 
-// Render the sign up page
+// Render the sign-up page
 module.exports.signUp = function(req, res) {
     if (req.isAuthenticated()) {
         return res.redirect('/users/profile');
@@ -44,7 +44,7 @@ module.exports.signUp = function(req, res) {
     });
 };
 
-// Render the sign in page
+// Render the sign-in page
 module.exports.signIn = function(req, res) {
     if (req.isAuthenticated()) {
         return res.redirect('/users/profile');
@@ -57,7 +57,7 @@ module.exports.signIn = function(req, res) {
 
 // Get the sign-up data
 module.exports.create = async function(req, res) {
-    if (req.body.password != req.body.confirm_password) {
+    if (req.body.password !== req.body.confirm_password) {
         req.flash('error', 'Passwords do not match');
         return res.redirect('back');
     }
@@ -67,13 +67,14 @@ module.exports.create = async function(req, res) {
 
         if (!user) {
             await User.create(req.body);
+            req.flash('success', 'You have signed up successfully! Please log in.');
             return res.redirect('/users/sign-in');
         } else {
-            req.flash('success', 'You have signed up, login to continue!');
+            req.flash('error', 'Email already registered. Please log in.');
             return res.redirect('back');
         }
     } catch (err) {
-        console.error(err);
+        console.error('Error in signing up:', err);
         req.flash('error', 'Error in signing up');
         return res.redirect('back');
     }
@@ -81,19 +82,19 @@ module.exports.create = async function(req, res) {
 
 // Sign in and create a session for the user
 module.exports.createSession = function(req, res) {
-    req.flash('success', 'Logged in Successfully');
+    req.flash('success', 'Logged in successfully');
     return res.redirect('/');
 };
 
 // Sign out and destroy the session
-module.exports.destroySession = function(req, res) {
+module.exports.destroySession = function(req, res, next) {
     req.logout(function(err) {
         if (err) {
-            console.error(err);
+            console.error('Error in logging out:', err);
             req.flash('error', 'Error in logging out');
-            return res.redirect('back');
+            return next(err); // Pass the error to the next middleware (error handler)
         }
-        req.flash('success', 'You have logged out!');
+        req.flash('success', 'You have logged out successfully!');
         return res.redirect('/');
     });
 };
