@@ -7,7 +7,7 @@ passport.use(new LocalStrategy({
         usernameField: 'email',
         passReqToCallback: true
     },
-    async function(req, email, password, done) { // Ensure req is the first parameter
+    async function(req, email, password, done){
         try {
             // Find a user and establish the identity
             const user = await User.findOne({ email: email });
@@ -19,27 +19,27 @@ passport.use(new LocalStrategy({
 
             return done(null, user);
         } catch (err) {
-            req.flash('error', err.message);
+            req.flash('error', err);
             return done(err);
         }
     }
 ));
 
 // Serializing the user to decide which key is to be kept in the cookies
-passport.serializeUser(function(user, done) {
+passport.serializeUser((user, done) => {
     done(null, user.id);
 });
 
 // Deserializing the user from the key in the cookies
-passport.deserializeUser(async function(id, done) {
+passport.deserializeUser(async (id, done) => {
     try {
         const user = await User.findById(id);
 
-        if (user) {
-            return done(null, user);
-        } else {
-            return done(new Error('User not found'));
+        if (!user) {
+            throw new Error('User not found');
         }
+
+        return done(null, user);
     } catch (err) {
         console.log('Error in finding user --> Passport');
         return done(err);
@@ -47,7 +47,7 @@ passport.deserializeUser(async function(id, done) {
 });
 
 // Check if the user is authenticated
-passport.checkAuthentication = function(req, res, next) {
+passport.checkAuthentication = (req, res, next) => {
     // If the user is signed in, then pass on the request to the next function (controller's action)
     if (req.isAuthenticated()) {
         return next();
@@ -57,7 +57,7 @@ passport.checkAuthentication = function(req, res, next) {
     return res.redirect('/users/sign-in');
 };
 
-passport.setAuthenticatedUser = function(req, res, next) {
+passport.setAuthenticatedUser = (req, res, next) => {
     if (req.isAuthenticated()) {
         // req.user contains the current signed in user from the session cookie and we are just sending this to the locals for the views
         res.locals.user = req.user;
