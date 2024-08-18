@@ -1,15 +1,17 @@
 const Comment = require('../models/comment');
 const Post = require('../models/post');
+const commentsMailer = require('../mailers/comments_mailer');
 
 module.exports.create = async function(req, res) {
-    try {
+ try {
         let post = await Post.findById(req.body.post);
 
-        if (!post) {
+       if (!post) {
             req.flash('error', 'Post not found');
             return res.redirect('back');
         }
-
+        
+    if(post){
         let comment = await Comment.create({
             content: req.body.content,
             post: req.body.post,
@@ -19,9 +21,12 @@ module.exports.create = async function(req, res) {
         post.comments.push(comment._id);
         await post.save();
 
+        comment = await Comment.findById(comment._id).populate('user', 'name email').exec();
+        commentsMailer.newComment(comment);
+
         if (req.xhr) {
             // Populate the user field to include only the name of the user
-            comment = await Comment.findById(comment._id).populate('user', 'name');
+            // comment = await Comment.findById(comment._id).populate('user', 'name');
 
             return res.status(200).json({
                 data: {
@@ -33,7 +38,8 @@ module.exports.create = async function(req, res) {
 
         req.flash('success', 'Comment published!');
         return res.redirect('/');
-    } catch (err) {
+    }
+} catch (err) {
         console.error('Error in creating comment:', err);
         req.flash('error', 'Could not create comment');
         return res.redirect('back');
@@ -55,6 +61,7 @@ module.exports.destroy = async function(req, res) {
         }
 
         let postId = comment.post;
+        await comment.remove();
 
         await Comment.findByIdAndDelete(req.params.id);
 
