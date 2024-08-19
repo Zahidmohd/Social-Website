@@ -4,6 +4,7 @@ const logger = require('morgan');
 
 const cookieParser = require('cookie-parser');
 const app = express();
+require('./config/view-helpers')(app);
 const port = 8000;
 const expressLayouts = require('express-ejs-layouts');
 const db = require('./config/mongoose');
@@ -35,9 +36,11 @@ const chatSockets = require('./config/chat_sockets').chatSockets(io);
 chatServer.listen(5000, () => {
     console.log('Chat server is listening on port 5000');
 });
+
 const path = require('path');
 
-if (env.name == 'development'){
+// Setup Sass middleware only in development
+if (env.name === 'development') {
     app.use(sassMiddleware({
         src: path.join(__dirname, env.asset_path, 'scss'),
         dest: path.join(__dirname, env.asset_path, 'css'),
@@ -47,24 +50,27 @@ if (env.name == 'development'){
     }));
 }
 
-app.use(express.urlencoded());
-
+// Middleware setup
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(express.static('env.asset_path'));
-// make the uploads path available to the browser
-app.use('/uploads', express.static(__dirname + '/uploads'));
+app.use(express.static(path.join(__dirname, env.asset_path)));
 
+// Make the uploads path available to the browser
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Logger
 app.use(logger(env.morgan.mode, env.morgan.options));
 
+// Set up express-ejs-layouts
 app.use(expressLayouts);
-// extract style and scripts from sub pages into the layout
 app.set('layout extractStyles', true);
 app.set('layout extractScripts', true);
 
-// set up the view engine
+// Set up view engine
 app.set('view engine', 'ejs');
-app.set('views', './views');
+app.set('views', path.join(__dirname, 'views'));
 
+// Set up session and passport
 (async function() {
     try {
         const store = MongoStore.create({
@@ -78,7 +84,7 @@ app.set('views', './views');
             saveUninitialized: false,
             resave: false,
             cookie: {
-                maxAge: (1000 * 60 * 100)
+                maxAge: (1000 * 60 * 100) // 100 minutes
             },
             store: store
         }));
@@ -97,6 +103,6 @@ app.set('views', './views');
             console.log(`Server is running on port: ${port}`);
         });
     } catch (err) {
-        console.error('Error in setting up session store', err);
+        console.error('Error in setting up session store:', err);
     }
 })();
